@@ -33,7 +33,7 @@
 //---------------------------------------------------------------------------
 
 #pragma once
-#include "../enums.h"
+#include "../Enums.h"
 #include <string>
 
 using namespace std;

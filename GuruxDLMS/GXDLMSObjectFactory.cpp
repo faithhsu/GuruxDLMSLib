@@ -48,7 +48,7 @@
 #include "Objects/GXDLMSRegisterMonitor.h"
 #include "Objects/GXDLMSProfileGeneric.h"
 #include "Objects/GXDLMSTcpUdpSetup.h"
-#include "Objects/GXDLMSGprsSetup.h"
+#include "Objects/GXDLMSGPRSSetup.h"
 #include "Objects/GXDLMSActionSchedule.h"
 #include "Objects/GXDLMSSpecialDaysTable.h"
 #include "Objects/GXDLMSImageTransfer.h"

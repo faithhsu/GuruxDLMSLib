@@ -218,7 +218,7 @@ int CGXDLMSRegister::GetDataType(int index, DLMS_DATA_TYPE& type)
 	}
 	if (index == 3)
 	{
-		type = DLMS_DATA_TYPE_STRUCTURE;
+		type = DLMS_DATA_TYPE_ARRAY;
 		return ERROR_CODES_OK;
 	}
 	return ERROR_CODES_INVALID_PARAMETER;
@@ -240,7 +240,7 @@ int CGXDLMSRegister::GetValue(int index, int selector, CGXDLMSVariant& parameter
 	if (index == 3)
 	{
 		value.Clear();
-		value.vt = DLMS_DATA_TYPE_STRUCTURE;
+		value.vt = DLMS_DATA_TYPE_ARRAY;
 		value.Arr.push_back(m_Scaler);
 		value.Arr.push_back(m_Unit);
 		return ERROR_CODES_OK;

@@ -139,12 +139,11 @@ int CGXDLMSExtendedRegister::GetDataType(int index, DLMS_DATA_TYPE& type)
 	}
 	if (index == 4)
     {
-		type = DLMS_DATA_TYPE_OCTET_STRING;
-		return ERROR_CODES_OK;
+		return CGXDLMSObject::GetDataType(index, type);
     }
 	if (index == 5)
     {
-		type = DLMS_DATA_TYPE_OCTET_STRING;
+		type = DLMS_DATA_TYPE_DATETIME;
 		return ERROR_CODES_OK;
     }
 	return ERROR_CODES_INVALID_PARAMETER;
@@ -152,23 +151,18 @@ int CGXDLMSExtendedRegister::GetDataType(int index, DLMS_DATA_TYPE& type)
 
 int CGXDLMSExtendedRegister::GetValue(int index, int selector, CGXDLMSVariant& parameters, CGXDLMSVariant& value)
 {
-	if (index == 1)
+	if (index < 4)
 	{
-		GXHelpers::AddRange(value.byteArr, m_LN, 6);
-		value.vt = DLMS_DATA_TYPE_OCTET_STRING;
+		return CGXDLMSRegister::GetValue(index, selector, parameters, value);
+	}
+    if (index == 4)
+	{
+		value = m_Status;
 		return ERROR_CODES_OK;
 	}
-    if (index == 2)
+	if (index == 5)
 	{
-		value = m_Value;
-		return ERROR_CODES_OK;
-	}
-	if (index == 3)
-	{
-		value.Clear();
-		value.vt = DLMS_DATA_TYPE_STRUCTURE;
-		value.Arr.push_back(m_Scaler);
-		value.Arr.push_back(m_Unit);
+		value = m_CaptureTime;
 		return ERROR_CODES_OK;
 	}
 	return ERROR_CODES_INVALID_PARAMETER;

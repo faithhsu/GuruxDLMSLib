@@ -146,17 +146,35 @@ int CGXDLMSProfileGeneric::GetProfileGenericData(int selector, CGXDLMSVariant& p
     if (selector == 0 || parameters.vt == DLMS_DATA_TYPE_NONE)
     {
         return GetData(GetBuffer(), reply);            
-    }    
+    }
     vector< vector<CGXDLMSVariant> >& table = GetBuffer();
     vector< vector<CGXDLMSVariant> > items;
     //TODO: Lock synchronized (this)
     {
         if (selector == 1) //Read by range
-        {	
+        {
+			int size;
+			int ret;
+			unsigned char *byteArr;
+
+			size = parameters.Arr[1].byteArr.size();
+			byteArr = &parameters.Arr[1].byteArr[0];
+			if((ret = CGXOBISTemplate::GetData(byteArr, size, DLMS_DATA_TYPE_DATETIME, from, NULL, NULL, NULL)) != ERROR_CODES_OK)
+			{
+				return ret;
+			}
+
+			size = parameters.Arr[2].byteArr.size();
+			byteArr = &parameters.Arr[2].byteArr[0];
+			if((ret = CGXOBISTemplate::GetData(byteArr, size, DLMS_DATA_TYPE_DATETIME, to, NULL, NULL, NULL)) != ERROR_CODES_OK)
+			{
+				return ret;
+			}
+
 			struct tm tmp = from.dateTime.GetValue();
 			time_t start = mktime(&tmp);
 			tmp = to.dateTime.GetValue();
-			time_t end = mktime(&tmp);				 
+			time_t end = mktime(&tmp);
 			for (vector< vector<CGXDLMSVariant> >::iterator row = table.begin(); row != table.end(); ++row)                           
             {
 				tmp = (*row)[0].dateTime.GetValue();
@@ -169,6 +187,9 @@ int CGXDLMSProfileGeneric::GetProfileGenericData(int selector, CGXDLMSVariant& p
         }
         else if (selector == 2) //Read by entry.
         {
+			from = parameters.Arr[0];
+			to = parameters.Arr[1];
+
             int start = from.ToInteger();
             int count = to.ToInteger();
             for (int pos = 0; pos < count; ++pos)
@@ -326,6 +347,8 @@ void CGXDLMSProfileGeneric::SetSortObject(int value)
 void CGXDLMSProfileGeneric::Reset()
 {
 	//TODO:
+	m_Buffer.clear();
+	m_EntriesInUse = 0;
 }
 
 /** 
@@ -335,6 +358,34 @@ void CGXDLMSProfileGeneric::Reset()
 void CGXDLMSProfileGeneric::Capture()
 {
 	//TODO:
+	vector<CGXDLMSVariant> values;
+	for (std::vector<std::pair<CGXDLMSObject*, CGXDLMSCaptureObject*> >::iterator it = m_CaptureObjects.begin(); it != m_CaptureObjects.end(); ++it)                    
+    {
+		OBJECT_TYPE type = (*it).first->GetObjectType();
+		string ln;
+		(*it).first->GetLogicalName(ln);
+		CGXDLMSObject* pObj = NULL;
+		if(GetParent() != NULL)
+		{
+			pObj = GetParent()->FindByLN(type, ln);
+		}
+		if(pObj == NULL)
+		{                        
+		    pObj = CGXDLMSObjectFactory::CreateObject(type);
+		    pObj->SetLogicalName(ln);
+		}
+		CGXDLMSVariant null;
+		CGXDLMSVariant value;
+		pObj->GetValue((*it).second->GetAttributeIndex(), 0, null, value);
+		values.push_back(value);
+    }
+
+	if(GetProfileEntries() == m_Buffer.size())
+	{
+		m_Buffer.erase(m_Buffer.begin());
+	}
+	m_Buffer.push_back(values);
+	m_EntriesInUse = m_Buffer.size();
 }
 
 void CGXDLMSProfileGeneric::GetValues(vector<string>& values)
@@ -499,13 +550,18 @@ int CGXDLMSProfileGeneric::GetValue(int index, int selector, CGXDLMSVariant& par
 		return ERROR_CODES_OK;
     }
     if (index == 2)
-    {			
-		return GetProfileGenericData(selector, parameters, value.byteArr);          
+    {
+		vector<unsigned char> vArr;
+		int ret = GetProfileGenericData(selector, parameters, vArr);
+		value = CGXDLMSVariant(vArr);
+		return ret;
     }        
     if (index == 3)
     {
 		vector<unsigned char> data;
-        return GetColumns(data);
+		int ret = GetColumns(data);
+		value = CGXDLMSVariant(data);
+        return ret;
     }
     if (index == 4)
     {
